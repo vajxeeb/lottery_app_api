@@ -48,7 +48,7 @@ const option = {
   swagger: "3.0",
     servers: [
       {
-        url: `http://localhost:${PORT}`
+        url: `http://49.0.198.122:7000`
       }
     ],
   },

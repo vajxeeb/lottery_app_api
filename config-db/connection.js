@@ -14,4 +14,6 @@
     }).catch(err => {
         console.log("Connect failed")
     })
-   
+    
+    module.exports = connection
+
