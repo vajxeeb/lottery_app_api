@@ -9,11 +9,5 @@
         port: 5432,
     });
     
-    connection.connect().then(res => {
-        console.log('Connected')
-    }).catch(err => {
-        console.log("Connect failed")
-    })
-    
     module.exports = connection
 
