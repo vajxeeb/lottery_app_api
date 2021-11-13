@@ -41,22 +41,26 @@ const logger = require('./config-log/logger')
 let PUT = async function (res,loggerinfo,  SQL, Parameters) {
 
     logger.info(loggerinfo)
-
-    await connection.query(SQL, Parameters, (err, results) => {
+await connection.connect((err, cleint, done) => {
+    
+    cleint.query(SQL, Parameters, (err, results) => {
         if (err) {
             logger.error(err);
-            res.status(403).send({ err: err })
+           return res.status(403).send({ err: err })
         }
 
         if (results.rowCount == 0) {
-            res.status(404).send({ message: "Not found data for update" })
+            return res.status(404).send({ message: "Not found data for update" })
         }
 
         else {
             logger.info(results)
-            res.status(200).send(results)
+            return res.status(200).send(results)
         }
     });
+    done();
+})
+    
 }
 
 //............DELTE................./

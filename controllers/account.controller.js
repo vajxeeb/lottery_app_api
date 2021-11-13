@@ -21,34 +21,39 @@ exports.login = async (req, res) => {
     if (!account.device_code || !account.us_pwd) {
         return res.status(400).send({ message: 'Enter your password' })
     }
-    await connection.query(SQL, [account.device_code, account.us_pwd], (error, results) => {
-        if (error) {
-            logger.error(error)
-            res.status(403).send({ error: error })
-        }
-        if (results.rowCount == 0) {
+    await connection.connect((err, cleint, done) => {
 
-            res.status(404).send({ message: 'password incorrect' })
-        }
-        else {
-            SQL = `SELECT * FROM public.tbl_set_number`
+        cleint.query(SQL, [account.device_code, account.us_pwd], (error, results) => {
+            if (error) {
+                logger.error(error)
+                return res.status(403).send({ error: error })
+            }
+            if (results.rowCount == 0) {
 
-            connection.query(SQL, (err, rs) => {
-                jwt.sign({ account }, 'secretkey', (err, accessToken) => {
-                    res.json({
-                        online: true,
-                        deviceCode: account.device_code,
-                        offlineDate: '05/11/2021',
-                        isOverMaxSell: false,
-                        accessToken, accessToken,
-                        setNumberList: rs.rows
+                return res.status(404).send({ message: 'password incorrect' })
+            }
+            else {
+                SQL = `SELECT * FROM public.tbl_set_number`
+
+                connection.query(SQL, (err, rs) => {
+                    jwt.sign({ account }, 'secretkey', (err, accessToken) => {
+                        res.json({
+                            online: true,
+                            deviceCode: account.device_code,
+                            offlineDate: '05/11/2021',
+                            isOverMaxSell: false,
+                            accessToken, accessToken,
+                            setNumberList: rs.rows
+                        });
                     });
-                });
-            })
+                })
 
-        }
+            }
 
-    });
+        });
+        done();
+    })
+
 }
 
 //.....................PasswordChange..............//
@@ -80,22 +85,28 @@ exports.checkversion = async (req, res) => {
 
     logger.info(`GET/api/account/CheckVersion/${account.version_name}`)
 
-    await connection.query(SQL, [account.version_name], (error, results) => {
-        if (error) {
-            logger.error(error)
-            res.status(403).send({ error: error })
-        }
+    await connection.connect((err, cleint, done) => {
+        
+        cleint.query(SQL, [account.version_name], (error, results) => {
+            if (error) {
+                logger.error(error)
+                return res.status(403).send({ error: error })
+            }
 
-        if (results.rowCount == 0) {
-            res.status(404).send(false)
-        }
+            if (results.rowCount == 0) {
+                return res.status(404).send(false)
+            }
 
-        else {
-            logger.info(results.rows)
-            res.status(200).send(true)
-        }
+            else {
+                logger.info(results.rows)
+                return res.status(200).send(true)
+            }
 
+        })
+
+        done();
     })
+
 
 }
 
@@ -108,15 +119,20 @@ exports.CheckVersionV2 = async (req, res) => {
     account = req.params
 
     SQL = `SELECT * FROM tbl_version_mobile WHERE version_name = $1`
-    await connection.query(SQL, [account.version_name], (error, results) => {
+    await connection.connect((err, cleint, done) => {
 
-        if (error) {
-            logger.error(error)
-            res.status(403).send({ error: error })
-        }
+        cleint.query(SQL, [account.version_name], (error, results) => {
 
-        if (results.rows > 0 && results.rows[0].version_status == 1)
-            isVersionLatest = true
+            if (error) {
+                logger.error(error)
+                return res.status(403).send({ error: error })
+            }
+
+            if (results.rows > 0 && results.rows[0].version_status == 1)
+                isVersionLatest = true
+        })
+
+        done();
     })
 
     logger.info(`GET/api/account/CheckVersionV2/${account.version_name}/${account.device_imei}`)
@@ -131,27 +147,32 @@ exports.CheckVersionV2 = async (req, res) => {
                      AND   tbl_branch_code.branch_id   = tbl_device.branch_id 
                      AND   tbl_device.device_imei = $1`
 
-    await connection.query(SQL, [account.device_imei], (error, results) => {
+    await connection.connect((err, cleint, done) => {
+
+        cleint.query(SQL, [account.device_imei], (error, results) => {
 
 
-        if (error) {
-            logger.error(error)
-            res.status(403).send({ error: error })
+            if (error) {
+                logger.error(error)
+                return res.status(403).send({ error: error })
 
-        }
-        if (results.rowCount == 0) {
-            res.status(404).send({ message: 'Not found' })
-        }
-        else {
-            res.json({
-                device_number: results.rows[0].device_number,
-                device_code: results.rows[0].device_code,
-                branch_id: results.rows[0].device_branch_id,
-                branchName: results.rows[0].province_name + " ເລກ " + results.rows[0].branch_code,
-                isVersionLatest: isVersionLatest
-            })
+            }
+            if (results.rowCount == 0) {
+                return res.status(404).send({ message: 'Not found' })
+            }
+            else {
+                res.json({
+                    device_number: results.rows[0].device_number,
+                    device_code: results.rows[0].device_code,
+                    branch_id: results.rows[0].device_branch_id,
+                    branchName: results.rows[0].province_name + " ເລກ " + results.rows[0].branch_code,
+                    isVersionLatest: isVersionLatest
+                })
 
-        }
+            }
 
+        })
+        done();
     })
+
 }
